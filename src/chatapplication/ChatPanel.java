@@ -17,18 +17,17 @@ import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- *
- * @author zIgma
- *
- */
 public class ChatPanel extends javax.swing.JPanel {
-
+    // Messages in jList
     DefaultListModel listModel1 = new DefaultListModel();
     DefaultListModel listModel2 = new DefaultListModel();
     
     // List stores database index
-    List<Integer> messages = new ArrayList<>();
+    List<Integer> ownMessages = new ArrayList<>();
+    List<Integer> otherMessages = new ArrayList<>();
+    
+    private int senderId = -1;
+    private int receiverId = -1;
     
     /**
      * Creates new form ChatPanel
@@ -38,8 +37,8 @@ public class ChatPanel extends javax.swing.JPanel {
         repaint();
         revalidate();
         
-        jList1.setModel(listModel1);
-        jList2.setModel(listModel2);
+        listMyMessages.setModel(listModel1);
+        listOtherMessages.setModel(listModel2);
     }
 
     /**
@@ -51,16 +50,18 @@ public class ChatPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jTextField1 = new javax.swing.JTextField();
-        jButton1 = new javax.swing.JButton();
+        txtMessageField = new javax.swing.JTextField();
+        btnSend = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jList1 = new javax.swing.JList<>();
+        listMyMessages = new javax.swing.JList<>();
         jScrollPane2 = new javax.swing.JScrollPane();
-        jList2 = new javax.swing.JList<>();
-        jButton2 = new javax.swing.JButton();
+        listOtherMessages = new javax.swing.JList<>();
+        btnSettings = new javax.swing.JButton();
         jToolBar1 = new javax.swing.JToolBar();
-        jButton3 = new javax.swing.JButton();
-        jButton4 = new javax.swing.JButton();
+        btnDeleteMessage = new javax.swing.JButton();
+        btnBack = new javax.swing.JButton();
+        lblMe = new javax.swing.JLabel();
+        lblFriend = new javax.swing.JLabel();
 
         setBackground(new java.awt.Color(255, 255, 255));
         addHierarchyListener(new java.awt.event.HierarchyListener() {
@@ -69,58 +70,65 @@ public class ChatPanel extends javax.swing.JPanel {
             }
         });
 
-        jTextField1.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
-        jTextField1.setText("Hello");
+        txtMessageField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+        txtMessageField.setText("Hello");
 
-        jButton1.setText("Send");
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
+        btnSend.setText("Send");
+        btnSend.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                btnSendActionPerformed(evt);
             }
         });
 
-        jList1.setModel(new javax.swing.AbstractListModel<String>() {
+        listMyMessages.setModel(new javax.swing.AbstractListModel<String>() {
             String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
             public int getSize() { return strings.length; }
             public String getElementAt(int i) { return strings[i]; }
         });
-        jScrollPane1.setViewportView(jList1);
+        jScrollPane1.setViewportView(listMyMessages);
 
-        jList2.setModel(new javax.swing.AbstractListModel<String>() {
+        listOtherMessages.setModel(new javax.swing.AbstractListModel<String>() {
             String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
             public int getSize() { return strings.length; }
             public String getElementAt(int i) { return strings[i]; }
         });
-        jScrollPane2.setViewportView(jList2);
+        jScrollPane2.setViewportView(listOtherMessages);
 
-        jButton2.setText("Settings");
-        jButton2.addActionListener(new java.awt.event.ActionListener() {
+        btnSettings.setText("Settings");
+        btnSettings.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton2ActionPerformed(evt);
+                btnSettingsActionPerformed(evt);
             }
         });
 
         jToolBar1.setBackground(new java.awt.Color(255, 255, 255));
         jToolBar1.setRollover(true);
 
-        jButton3.setBackground(new java.awt.Color(255, 255, 255));
-        jButton3.setText("Delete");
-        jButton3.setFocusable(false);
-        jButton3.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        jButton3.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        jButton3.addActionListener(new java.awt.event.ActionListener() {
+        btnDeleteMessage.setBackground(new java.awt.Color(255, 255, 255));
+        btnDeleteMessage.setText("Delete");
+        btnDeleteMessage.setFocusable(false);
+        btnDeleteMessage.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnDeleteMessage.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnDeleteMessage.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton3ActionPerformed(evt);
+                btnDeleteMessageActionPerformed(evt);
             }
         });
-        jToolBar1.add(jButton3);
+        jToolBar1.add(btnDeleteMessage);
 
-        jButton4.setText("Back");
-        jButton4.addActionListener(new java.awt.event.ActionListener() {
+        btnBack.setText("Back");
+        btnBack.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton4ActionPerformed(evt);
+                btnBackActionPerformed(evt);
             }
         });
+
+        lblMe.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        lblMe.setText("User");
+
+        lblFriend.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        lblFriend.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblFriend.setText("User 2");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -134,15 +142,19 @@ public class ChatPanel extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 337, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jTextField1)
+                        .addComponent(txtMessageField)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(btnSend, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(jButton4)
+                        .addComponent(btnBack)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jToolBar1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton2)))
+                        .addComponent(btnSettings))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(lblMe)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(lblFriend)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -150,25 +162,29 @@ public class ChatPanel extends javax.swing.JPanel {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jButton2)
+                    .addComponent(btnSettings)
                     .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton4))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                    .addComponent(btnBack))
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblMe)
+                    .addComponent(lblFriend))
+                .addGap(13, 13, 13)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 398, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 364, Short.MAX_VALUE)
                     .addComponent(jScrollPane2))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jTextField1)
-                    .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, 33, Short.MAX_VALUE))
+                    .addComponent(txtMessageField)
+                    .addComponent(btnSend, javax.swing.GroupLayout.DEFAULT_SIZE, 33, Short.MAX_VALUE))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+    private void btnSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSettingsActionPerformed
         Main frm = (Main) Main.getInstance();
         frm.setActivePanel(frm.settingsPanel);
-    }//GEN-LAST:event_jButton2ActionPerformed
+    }//GEN-LAST:event_btnSettingsActionPerformed
 
     private void formHierarchyChanged(java.awt.event.HierarchyEvent evt) {//GEN-FIRST:event_formHierarchyChanged
         JComponent component = (JComponent)evt.getComponent();
@@ -177,21 +193,21 @@ public class ChatPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_formHierarchyChanged
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        send(jTextField1.getText());
-    }//GEN-LAST:event_jButton1ActionPerformed
+    private void btnSendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSendActionPerformed
+        send(txtMessageField.getText());
+    }//GEN-LAST:event_btnSendActionPerformed
 
-    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-        if (!jList1.isSelectionEmpty())
+    private void btnDeleteMessageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeleteMessageActionPerformed
+        if (!listMyMessages.isSelectionEmpty())
         {
-            delete(jList1.getSelectedIndex());
+            delete(listMyMessages.getSelectedIndex());
         }
-    }//GEN-LAST:event_jButton3ActionPerformed
+    }//GEN-LAST:event_btnDeleteMessageActionPerformed
 
-    private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
+    private void btnBackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBackActionPerformed
         Main frm = (Main) Main.getInstance();
         frm.setActivePanel(frm.previousPanel);
-    }//GEN-LAST:event_jButton4ActionPerformed
+    }//GEN-LAST:event_btnBackActionPerformed
 
     ImageIcon getAsIcon(String location) {
         ImageIcon imageIcon = new ImageIcon(location);
@@ -200,34 +216,54 @@ public class ChatPanel extends javax.swing.JPanel {
         return new ImageIcon(newImage);
     }
     
+    private String getName(StatementImpl stmt, int userId) throws SQLException {
+        ResultSet resultSet = stmt.executeQuery("SELECT user_name FROM chat_user WHERE user_id=" + userId);
+        resultSet.next();
+        return resultSet.getString("user_name");
+    }
+    
     private void update() {
         try {
-            Main mainInstance = (Main) Main.getInstance();
+            Main main = (Main) Main.getInstance();
             
             // clear the message list
+            ownMessages.clear();
+            otherMessages.clear();
+            
             listModel1.clear();
             listModel2.clear();
-            jList1.setModel(listModel1);
-            jList2.setModel(listModel2);
+            listMyMessages.setModel(listModel1);
+            listOtherMessages.setModel(listModel2);
             
             // TODO: get data from database and add those into messages array
             // Query: SELECT * FROM chat_message WHERE sender = myUserId AND receiver = receiverId
-            Connection conn = mainInstance.conn;
-            StatementImpl stmt = (StatementImpl) conn.createStatement();
+            Connection db = Main.dbConnection;
+            StatementImpl stmt = (StatementImpl) db.createStatement();
             
-            ResultSet rSet = stmt.executeQuery("SELECT * FROM chat_message WHERE sender = " + mainInstance.myUserId + " OR sender = " + mainInstance.receiverId + "");
-            while (rSet.next()) {
-                messages.add(rSet.getInt("message_id"));
-                
-                if (rSet.getInt("sender") == mainInstance.myUserId) {
-                    if (rSet.getBoolean("is_text")) {
-                        listModel1.addElement(rSet.getString("message"));
+            senderId = main.myUserId;
+            receiverId = main.receiverId;
+
+            lblMe.setText(getName(stmt, senderId));
+            lblFriend.setText(getName(stmt, receiverId));
+            
+            ResultSet resultSet = stmt.executeQuery("SELECT * FROM chat_message WHERE sender = " + senderId + " OR sender = " + receiverId + "");
+            while (resultSet.next()) {
+                if (resultSet.getInt("sender") == senderId) {
+                    ownMessages.add(resultSet.getInt("message_id"));
+                    if (resultSet.getBoolean("is_text")) {
+                        listModel1.addElement(resultSet.getString("message"));
                     }
                 } else {
-                    if (rSet.getBoolean("is_text")) {
-                        listModel2.addElement(rSet.getString("message"));
+                    otherMessages.add(resultSet.getInt("message_id"));
+                    if (resultSet.getBoolean("is_text")) {
+                        listModel2.addElement(resultSet.getString("message"));
                     }
                 }
+            }
+            
+            System.out.println();
+            for (int i = 0; i < ownMessages.size(); i++) {
+                System.out.println(i + " " + ownMessages.get(i));
             }
         } catch (SQLException ex) {
             Logger.getLogger(ChatPanel.class.getName()).log(Level.SEVERE, null, ex);
@@ -240,12 +276,12 @@ public class ChatPanel extends javax.swing.JPanel {
         try {
             Main mainInstance = (Main) Main.getInstance();
             
-            Connection conn = mainInstance.conn;
-            StatementImpl stmt = (StatementImpl) conn.createStatement();
+            Connection db = Main.dbConnection;
+            StatementImpl stmt = (StatementImpl) db.createStatement();
             
             String query = "";
             if (obj instanceof String && !((String)obj).isEmpty()) {
-                query = "INSERT INTO chat_message (sender, receiver, message) VALUES (" + mainInstance.myUserId + ", " + mainInstance.receiverId + ", \"" + jTextField1.getText() + "\")";
+                query = "INSERT INTO chat_message (sender, receiver, message) VALUES (" + mainInstance.myUserId + ", " + mainInstance.receiverId + ", \"" + txtMessageField.getText() + "\")";
             }
             
             if (!query.isEmpty()) {
@@ -259,31 +295,52 @@ public class ChatPanel extends javax.swing.JPanel {
             Logger.getLogger(ChatPanel.class.getName()).log(Level.SEVERE, null, ex);
         }
         
-        jTextField1.setText("");
+        txtMessageField.setText("");
     }
     
     private void delete(int messageId) {
-        if (!messages.isEmpty()) {
-            int dbIndex = messages.get(messageId);
-            messages.remove(messageId);
+        System.out.println("selected index: " + messageId);
+        System.out.println("database index: " + ownMessages.get(messageId));
         
-            // TODO: delete message from database
-            // Query: DELETE FROM chat_message WHERE id = dbIndex
-            
-            update();
+        if (!ownMessages.isEmpty()) {
+            try {
+                int dbIndex = ownMessages.get(messageId);
+                ownMessages.remove(messageId);
+                
+                Connection conn = Main.dbConnection;
+                StatementImpl stmt = (StatementImpl)conn.createStatement();
+                
+                String query = "SELECT * FROM chat_message WHERE message_id = " + dbIndex;
+//                ResultSet rSet = stmt.executeQuery(query);
+//                if (rSet.getInt("sender") == ((Main)Main.getInstance()).myUserId)
+//                {
+                    // TODO: delete message from database
+                    // Query: DELETE FROM chat_message WHERE id = dbIndex
+                    query = "DELETE FROM chat_message WHERE message_id = " + dbIndex;
+                    stmt.executeUpdate(query);
+//                }
+                
+                System.out.println("Deleting " + dbIndex + "...");
+                
+                update();
+            } catch (SQLException ex) {
+                Logger.getLogger(ChatPanel.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
-    private javax.swing.JButton jButton3;
-    private javax.swing.JButton jButton4;
-    private javax.swing.JList<String> jList1;
-    private javax.swing.JList<String> jList2;
+    private javax.swing.JButton btnBack;
+    private javax.swing.JButton btnDeleteMessage;
+    private javax.swing.JButton btnSend;
+    private javax.swing.JButton btnSettings;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JTextField jTextField1;
     private javax.swing.JToolBar jToolBar1;
+    private javax.swing.JLabel lblFriend;
+    private javax.swing.JLabel lblMe;
+    private javax.swing.JList<String> listMyMessages;
+    private javax.swing.JList<String> listOtherMessages;
+    private javax.swing.JTextField txtMessageField;
     // End of variables declaration//GEN-END:variables
 }

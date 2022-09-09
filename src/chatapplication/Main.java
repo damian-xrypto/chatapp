@@ -9,6 +9,7 @@ import java.awt.BorderLayout;
 import java.awt.Container;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Scanner;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -22,27 +23,28 @@ import java.util.logging.Logger;
 
 /**
  *
- * @author zIgma
  * Ref1: https://www.geeksforgeeks.org/java-swing-jpanel-with-examples/#:~:text=JPanel%2C%20a%20part%20of%20the,not%20have%20a%20title%20bar.
  * Ref2: https://stackoverflow.com/questions/8203824/problems-dynamically-changing-jpanels-on-jframe
  * Ref3: https://stackoverflow.com/questions/6714045/how-to-resize-jlabel-imageicon
  * Ref4: https://www.w3schools.com/java/java_files_read.asp
+ * Ref5: https://www.w3schools.com/java/java_files_create.asp
  */
 public class Main extends javax.swing.JFrame {
 
-    public JPanel chatPanel = new ChatPanel();
-    public JPanel settingsPanel = new SettingsPanel();
+    protected JPanel chatPanel = new ChatPanel();
+    protected JPanel settingsPanel = new SettingsPanel();
+    protected JPanel signupPanel = new SignupPanel();
+    protected JPanel contactsPanel = chatPanel;
     
-    public Container contentPane = null;
-    public JPanel activePanel = chatPanel;
-    public JPanel previousPanel = chatPanel;
+    protected Container contentPane = null;
+    protected JPanel activePanel = chatPanel;
+    protected JPanel previousPanel = chatPanel;
     
-    public Connection conn = null;
+    protected static Connection dbConnection = null;
+    protected static JFrame mainInstance = null;
     
-    private static JFrame mainInstance = null;
-    
-    public int myUserId = -1;
-    public int receiverId = -1;
+    protected int myUserId = -1;
+    protected int receiverId = -1;
     
     /**
      * Startup function
@@ -50,53 +52,55 @@ public class Main extends javax.swing.JFrame {
     public Main() {
         initComponents();
         
-        // Database initialization
+        // Initialize database
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            conn = (Connection)DriverManager.getConnection("jdbc:mysql://localhost:3306/chat_app", "admin", "1234");
-            if (conn == null) {
+            dbConnection = (Connection)DriverManager.getConnection("jdbc:mysql://localhost:3306/chat_app", "admin", "1234");
+            if (dbConnection == null) {
                 System.out.println("Database error!");
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            System.out.println("Database initialized successfully!");
+        } catch (ClassNotFoundException | SQLException e) {
+            System.out.println("Database connection error!");
         }
         
-        // -1 means no user assigned
+        // myUserId = -1 means no user assigned
         if (myUserId == -1)
         {
             try {
                 File config = new File("data.txt");
-                Scanner sc = new Scanner(config);
-                String line = sc.nextLine();
-                System.out.println(line);
-                myUserId = Integer.parseInt(line.split(":")[1]);
-                line = sc.nextLine();
-                System.out.println(line);
-                receiverId = Integer.parseInt(line.split(":")[1]);
-            } catch (FileNotFoundException ex) {
-                System.out.println("Datafile not found!");
-                // Show registration form
+                if (config.exists() && config.length() != 0) {
+                    Scanner sc = new Scanner(config);
+                    String line = sc.nextLine();
+                    System.out.println(line);
+                    myUserId = Integer.parseInt(line.split(":")[1]);
+                } else {
+                    // Cannot find configuration file -> create new one and insert data
+                    config.createNewFile();
+                    activePanel = signupPanel;
+                }
+            } catch (IOException e) {
+                System.out.println("Error: reading or writing to config file!");
             }
         }
         
-        if (myUserId == -1) {
-            // Show error message
-        } else {
-            // TODO: check user-id is in database?, if not show register form
-            try {
-                StatementImpl stmt = (StatementImpl) conn.createStatement();
-                String sql = "SELECT * FROM chat_user WHERE user_id=" + myUserId;
-                ResultSet rSet = stmt.executeQuery(sql);
-                if (!rSet.next()) {
-                    // User is not is the db show registration
-                    System.out.println("There is no user like this!");
-                }
-            } catch (SQLException ex) {
-                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+        // Check user is in database?, if not show registration form
+        try {
+            StatementImpl stmt = (StatementImpl) dbConnection.createStatement();
+            String sql = "SELECT * FROM chat_user WHERE user_id=" + myUserId;
+            ResultSet resultSet = stmt.executeQuery(sql);
+            if (!resultSet.next()) {
+                // User is not in the db show registration
+                activePanel = signupPanel;
+            } else {
+                // User found in the db
+                myUserId = resultSet.getInt("user_id");
             }
+        } catch (SQLException ex) {
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
+        
+        // User found! show contacts form
+        // TODO: set receiverId and show chat panel for that receiver
         
         contentPane = getContentPane();
         contentPane.setLayout(new BorderLayout());

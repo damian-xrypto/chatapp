@@ -4,10 +4,6 @@
  */
 package chatapplication;
 
-/**
- *
- * @author zIgma
- */
 public class SettingsPanel extends javax.swing.JPanel {
 
     /**
